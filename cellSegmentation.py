@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from tensorflow.contrib.layers import batch_norm
 import ops  # Ops is a file with operations. Currently only conv layer implementation
 import re
 EPS = 1e-5
@@ -65,54 +66,65 @@ class CellSegmentation(object):
 
         # conv1 + relu
         with tf.variable_scope('conv1') as scope:
+            ch1 = 16
             kernel = _variable_with_weight_decay('weights',
-                                                 shape=[5, 5, x_image.get_shape()[-1], 64],
+                                                 shape=[3, 3, x_image.get_shape()[-1], ch1],
                                                  stddev=5e-2,
                                                  wd=0.0)
             conv = tf.nn.conv2d(x_image, kernel, [1, 1, 1, 1], padding='SAME')
-            biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.0))
+            biases = _variable_on_cpu('biases', [ch1], tf.constant_initializer(0.0))
             pre_activation = tf.nn.bias_add(conv, biases)
             conv1 = tf.nn.relu(pre_activation, name=scope.name)
-            _activation_summary(conv1)
+            # conv1_bn = my_batch_norm(conv1, ch, train_phase, name=scope.name + '_bn')
+            conv1_bn = batch_norm(conv1, is_training=train_phase)
+            _activation_summary(conv1_bn)
 
         # pool1
-        pool1 = conv1 #tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],padding='SAME', name='pool1')
+        # pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],padding='SAME', name='pool1')
+
         # norm1
-        norm1 = tf.nn.lrn(pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
+        # norm1 = tf.nn.lrn(conv1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
         # conv2 + relu
         with tf.variable_scope('conv2') as scope:
+            ch2 = 32
             kernel = _variable_with_weight_decay('weights',
-                                                 shape=[5, 5, 64, 64],
+                                                 shape=[3, 3, ch1, ch2],
                                                  stddev=5e-2,
                                                  wd=0.0)
-            conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
-            biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
+            conv = tf.nn.conv2d(conv1_bn, kernel, [1, 1, 1, 1], padding='SAME')
+            biases = _variable_on_cpu('biases', [ch2], tf.constant_initializer(0.1))
             pre_activation = tf.nn.bias_add(conv, biases)
             conv2 = tf.nn.relu(pre_activation, name=scope.name)
-            _activation_summary(conv2)
+            # conv2_bn = my_batch_norm(conv2, ch2, train_phase, name=scope.name + '_bn')
+            conv2_bn = batch_norm(conv2, is_training=train_phase)
+            _activation_summary(conv2_bn)
 
         # norm2
-        norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,name='norm2')
+        # norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,name='norm2')
+
         # pool2
-        pool2 = norm2 #tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1],strides=[1, 2, 2, 1], padding='SAME', name='pool2')
+        # pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1],strides=[1, 2, 2, 1], padding='SAME', name='pool2')
 
         # conv3 + relu
         with tf.variable_scope('conv3') as scope:
+            ch3 = output_size
             kernel = _variable_with_weight_decay('weights',
-                                                 shape=[5, 5, 64, output_size],
+                                                 shape=[3, 3, ch2, ch3],
                                                  stddev=5e-2,
                                                  wd=0.0)
-            conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
-            biases = _variable_on_cpu('biases', [output_size], tf.constant_initializer(0.1))
+            conv = tf.nn.conv2d(conv2_bn, kernel, [1, 1, 1, 1], padding='SAME')
+            biases = _variable_on_cpu('biases', [ch3], tf.constant_initializer(0.1))
             pre_activation = tf.nn.bias_add(conv, biases)
             conv3 = tf.nn.relu(pre_activation, name=scope.name)
-            _activation_summary(conv2)
+            # conv3_bn = my_batch_norm(conv3, ch3, train_phase, name=scope.name + '_bn')
+            conv3_bn = batch_norm(conv3, is_training=train_phase)
+            _activation_summary(conv3)
 
         # norm3
-        norm3 = tf.nn.lrn(conv3, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm3')
+        # norm3 = tf.nn.lrn(conv3, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm3')
 
-        predict = norm3
+        predict = conv3_bn
         reg = None
 
         return predict, reg
