@@ -1,0 +1,4 @@
+*.idea*
+*__*
+data/
+train_results/
