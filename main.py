@@ -23,9 +23,9 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('max_steps', 5000000, 'Number of steps to run trainer.')
 flags.DEFINE_float('learning_rate', 0.00001, 'Initial learning rate.')
 flags.DEFINE_float('regularization_weight',5e-4, 'L2 Norm regularization weight.')
-flags.DEFINE_integer('mini_batch_size', 10, 'Size of mini batch')
+flags.DEFINE_integer('mini_batch_size', 2, 'Size of mini batch')
 flags.DEFINE_integer('print_test', 1000, 'Print test frequency')
-flags.DEFINE_integer('print_train', 100, 'Print train frequency')
+flags.DEFINE_integer('print_train', 4, 'Print train frequency')
 
 # Please do not change those two flags
 win_flag = True

@@ -44,3 +44,14 @@ def my_batch_norm(x, n_out, phase_train):
                             lambda: (ema.average(batch_mean), ema.average(batch_var)))
         normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
     return normed
+
+
+def dice_coef(y_true_f, y_pred_f):
+    EPS = 1e-5
+    smooth = 1.
+    intersection = tf.reduce_sum(y_true_f * y_pred_f, keep_dims=True) +EPS
+    return (2. * intersection + smooth) / (tf.reduce_sum(y_true_f, keep_dims=True) + tf.reduce_sum(y_pred_f, keep_dims=True) + smooth)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)

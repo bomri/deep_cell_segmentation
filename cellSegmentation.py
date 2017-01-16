@@ -145,7 +145,19 @@ class CellSegmentation(object):
         
         # You need to choose loss function
         # loss = -999
-        loss = -tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(predict_reshaped, labels))
+
+        if True:
+            print("using sigmoid_cross_entropy_with_logits as loss ")
+            loss = -tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(predict_reshaped, labels))
+
+        if False:
+            print("using dice_coef_loss as loss")
+            predict = tf.cast(tf.contrib.layers.flatten(predict > 0), tf.float32)
+            # Calculate dice score
+            intersection = tf.add(tf.reduce_sum(tf.multiply(predict, labels), keep_dims=True), EPS)
+            union = tf.add(tf.add(tf.reduce_sum(predict, keep_dims=True), tf.reduce_sum(labels, keep_dims=True)), EPS)
+            dice = tf.div((tf.multiply(2.0, intersection)), union)
+            loss = 1 - dice
 
         tf.scalar_summary(self.get_name('loss without regularization'), loss)
 
