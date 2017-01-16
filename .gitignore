@@ -1,4 +1,7 @@
 *.idea*
 *__*
-data/
+data/*.csv
+data/Train
+data/Test
+data/Val
 train_results/
