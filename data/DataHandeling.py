@@ -61,7 +61,26 @@ class CSVSegReader(object):
                                                     channels=1, dtype=tf.uint8),
                         tf.float32,), self.image_size, name='input_seg')
 
+        # # flip left right
+        # r = tf.random_uniform((1,1), minval=0, maxval=1, dtype=tf.float32, seed=42) > 0.5
+        # if r is True:
+        #     image = tf.image.flip_left_right(image)
+        #     seg = tf.image.flip_left_right(seg)
 
+        # rotate 90
+        R = tf.random_uniform((1, 1), minval=0, maxval=4, dtype=tf.float32, seed=42)
+        RR = tf.round(R)
+        if RR is 0:
+            pass
+        elif RR is 1:
+            image = tf.image.rot90(image, k=1)
+            seg = tf.image.rot90(seg, k=1)
+        elif RR is 2:
+            image = tf.image.rot90(image, k=2)
+            seg = tf.image.rot90(seg, k=2)
+        elif RR is 3:
+            image = tf.image.rot90(image, k=3)
+            seg = tf.image.rot90(seg, k=3)
 
         return image, seg
 
