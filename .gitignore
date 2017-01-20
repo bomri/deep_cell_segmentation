@@ -1,7 +1,12 @@
+*.pyc
+my_Code
+ultrasound*
 *.idea*
 *__*
+data_aug/
 data/*.csv
 data/Train
 data/Test
 data/Val
 train_results/
+train_res*

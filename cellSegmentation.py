@@ -25,7 +25,7 @@ class CellSegmentation(object):
         self.regularization_weight = regularization_weight
         self.base_name = name
 
-    def org_model(self, train_phase):
+    def model(self, train_phase):
         """
         Define the model - The network architecture
         :param train_phase: tf.bool with True for train and False for test
@@ -38,19 +38,23 @@ class CellSegmentation(object):
 
         # Model convolutions
         d_out = 1
-        conv_1, reg1 = ops.conv2d(x_image, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
+        # conv_1, reg1 = ops.conv2d(x_image, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
+        conv_1, reg1 = ops.conv2d(x_image, output_dim=16, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
 
-        conv_2, reg2 = ops.conv2d(conv_1, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
+        # conv_2, reg2 = ops.conv2d(conv_1, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
+        conv_2, reg2 = ops.conv2d(conv_1, output_dim=32, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
 
-        conv_3, reg3 = ops.conv2d(conv_2, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
+        conv_3, reg3 = ops.conv2d(conv_2, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
 
-        predict = conv_3
+        conv_4, reg4 = ops.conv2d(conv_3, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_4")
+
+        predict = conv_4
         
         # reg = reg1 # reg2 + reg3 + reg4
-        reg = reg1 + reg2 + reg3
+        reg = reg1 + reg2 + reg3 + reg4
         return predict, reg
 
-    def model(self, train_phase):
+    def new_model(self, train_phase):
         """
         Define the model - The network architecture
         :param train_phase: tf.bool with True for train and False for test
@@ -66,17 +70,20 @@ class CellSegmentation(object):
 
         # conv1 + relu
         with tf.variable_scope('conv1') as scope:
-            ch1 = 16
+            ch1 = 1
             kernel = _variable_with_weight_decay('weights',
                                                  shape=[3, 3, x_image.get_shape()[-1], ch1],
                                                  stddev=5e-2,
                                                  wd=0.0)
             conv = tf.nn.conv2d(x_image, kernel, [1, 1, 1, 1], padding='SAME')
+
             biases = _variable_on_cpu('biases', [ch1], tf.constant_initializer(0.0))
+            # self.example_biases = biases
             pre_activation = tf.nn.bias_add(conv, biases)
             conv1 = tf.nn.relu(pre_activation, name=scope.name)
             # conv1_bn = my_batch_norm(conv1, ch, train_phase, name=scope.name + '_bn')
-            conv1_bn = batch_norm(conv1, is_training=train_phase)
+            # conv1_bn = batch_norm(conv1, is_training=train_phase)
+            conv1_bn = conv1
             _activation_summary(conv1_bn)
 
         # pool1
@@ -87,7 +94,7 @@ class CellSegmentation(object):
 
         # conv2 + relu
         with tf.variable_scope('conv2') as scope:
-            ch2 = 32
+            ch2 = 1
             kernel = _variable_with_weight_decay('weights',
                                                  shape=[3, 3, ch1, ch2],
                                                  stddev=5e-2,
@@ -97,7 +104,8 @@ class CellSegmentation(object):
             pre_activation = tf.nn.bias_add(conv, biases)
             conv2 = tf.nn.relu(pre_activation, name=scope.name)
             # conv2_bn = my_batch_norm(conv2, ch2, train_phase, name=scope.name + '_bn')
-            conv2_bn = batch_norm(conv2, is_training=train_phase)
+            # conv2_bn = batch_norm(conv2, is_training=train_phase)
+            conv2_bn = conv2
             _activation_summary(conv2_bn)
 
         # norm2
@@ -118,7 +126,8 @@ class CellSegmentation(object):
             pre_activation = tf.nn.bias_add(conv, biases)
             conv3 = tf.nn.relu(pre_activation, name=scope.name)
             # conv3_bn = my_batch_norm(conv3, ch3, train_phase, name=scope.name + '_bn')
-            conv3_bn = batch_norm(conv3, is_training=train_phase)
+            # conv3_bn = batch_norm(conv3, is_training=train_phase)
+            conv3_bn = conv3
             _activation_summary(conv3)
 
         # norm3
@@ -148,8 +157,8 @@ class CellSegmentation(object):
 
         if True:
             print("using sigmoid_cross_entropy_with_logits as loss ")
-            loss = -tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(predict_reshaped, labels))
-
+            pixel_loss = tf.nn.sigmoid_cross_entropy_with_logits(predict_reshaped, labels)
+            loss = tf.reduce_mean(pixel_loss)
         if False:
             print("using dice_coef_loss as loss")
             predict = tf.cast(tf.contrib.layers.flatten(predict > 0), tf.float32)
@@ -229,7 +238,8 @@ def _variable_on_cpu(name, shape, initializer):
     Returns:
       Variable Tensor
     """
-    with tf.device('/cpu:0'):
+    # with tf.device('/cpu:0'):
+    with tf.device('/gpu:0'):
         # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
         dtype = tf.float32
         var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)

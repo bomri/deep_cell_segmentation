@@ -21,14 +21,16 @@ FLAGS - an easy way to share constants variables between functions
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('max_steps', 5000000, 'Number of steps to run trainer.')
-flags.DEFINE_float('learning_rate', 0.00001, 'Initial learning rate.')
+# flags.DEFINE_float('learning_rate', 0.00001, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
 flags.DEFINE_float('regularization_weight',5e-4, 'L2 Norm regularization weight.')
-flags.DEFINE_integer('mini_batch_size', 2, 'Size of mini batch')
+mini_b_size = 128
+flags.DEFINE_integer('mini_batch_size', mini_b_size, 'Size of mini batch')
 flags.DEFINE_integer('print_test', 1000, 'Print test frequency')
-flags.DEFINE_integer('print_train', 4, 'Print train frequency')
+flags.DEFINE_integer('print_train', mini_b_size*2, 'Print train frequency')
 
 # Please do not change those two flags
-win_flag = True
+win_flag = False
 if win_flag is True:
     flags.DEFINE_string('train_dir',
                         r'C:/Omri/BGU/2017/deep learning/finalProject_2016/finalProject.students/finalProject.students/train_results/',
@@ -97,7 +99,7 @@ class Net(object):
             self.evaluation = self.network.evaluation(predict=self.model, labels=self.y_input)
 
 
-def run_evaluation(sess, eval_op, step, summary_op, writer):
+def run_evaluation(sess, eval_op, step, summary_op, writer, set_name):
     """
     Run evaluation and save checkpoint
     :param sess: tf session
@@ -111,7 +113,7 @@ def run_evaluation(sess, eval_op, step, summary_op, writer):
     summary_str = result[0]
     acc = result[1]
     writer.add_summary(summary_str, step)
-    print('Validation:  Time: %s , Evaluation at step %s: %s' % (datetime.datetime.now(), step, acc))
+    print('%s:  Time: %s , Evaluation at step %s: %s' % (set_name, datetime.datetime.now(), step, acc))
     logfile.writelines('Validation: Time: %s , Evaluation at step %s: %s\n' % (datetime.datetime.now(), step, acc))
     logfile.flush()
 
@@ -156,7 +158,7 @@ def train_model(mode, checkpoint=None):
     merged = tf.merge_all_summaries()
 
     # Init session, initialize all variables and create writer
-    sess = tf.Session()
+    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
     init = tf.initialize_all_variables()
     writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
@@ -180,12 +182,15 @@ def train_model(mode, checkpoint=None):
 
         if (i % FLAGS.print_test == 0):
             # Display evaluation, write it into a log file and save checkpoint
-            run_evaluation(sess, step=i, summary_op=merged, eval_op=net_val.evaluation, writer=writer)
+            print("-----"),
+            run_evaluation(sess, step=i, summary_op=merged, eval_op=net_val.evaluation, writer=writer, set_name="Valid")
+            run_evaluation(sess, step=i, summary_op=merged, eval_op=net_test.evaluation, writer=writer, set_name="Test")
             save_checkpoint(sess=sess, saver=saver, step=i)
         else:
             t_step, loss_value = sess.run([net.train_step, net.loss])
             if i % FLAGS.print_train == 0:
-                print('TRAIN: Time: %s , Loss value at step %s: %s' % (datetime.datetime.now(), i, loss_value))
+                run_evaluation(sess, step=i, summary_op=merged, eval_op=net.evaluation, writer=writer, set_name="Train")
+                # print('TRAIN: Time: %s , Loss value at step %s: %s' % (datetime.datetime.now(), i, loss_value))
                 logfile.writelines('TRAIN: Time: %s , Loss value at step %s: %s\n' % (datetime.datetime.now(), i, loss_value))
                 logfile.flush()
 
