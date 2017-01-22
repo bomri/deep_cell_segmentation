@@ -38,13 +38,17 @@ class CellSegmentation(object):
 
         # Model convolutions
         d_out = 1
+
         # conv_1, reg1 = ops.conv2d(x_image, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
         conv_1, reg1 = ops.conv2d(x_image, output_dim=16, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
+        conv_1 = ops.lrelu(conv_1, name='relu1')
 
         # conv_2, reg2 = ops.conv2d(conv_1, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
         conv_2, reg2 = ops.conv2d(conv_1, output_dim=32, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
+        conv_2 = ops.lrelu(conv_2, name='relu2')
 
         conv_3, reg3 = ops.conv2d(conv_2, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
+        conv_3 = ops.lrelu(conv_3, name='relu3')
 
         conv_4, reg4 = ops.conv2d(conv_3, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_4")
 

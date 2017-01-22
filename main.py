@@ -13,7 +13,7 @@ import datetime
 import time
 import argparse
 from cellSegmentation import CellSegmentation
-from data.DataHandeling import DataSets
+
 
 """
 FLAGS - an easy way to share constants variables between functions
@@ -22,7 +22,7 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('max_steps', 5000000, 'Number of steps to run trainer.')
 # flags.DEFINE_float('learning_rate', 0.00001, 'Initial learning rate.')
-flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.00001, 'Initial learning rate.')
 flags.DEFINE_float('regularization_weight',5e-4, 'L2 Norm regularization weight.')
 mini_b_size = 128
 flags.DEFINE_integer('mini_batch_size', mini_b_size, 'Size of mini batch')
@@ -48,8 +48,13 @@ else:
                                './train_results/',
                                """Directory where to write event logs """
                                """and checkpoints.""")
+
+    data_folder = "data"; from data.DataHandeling import DataSets
+    # data_folder = "data_aug"; from data_aug.DataHandeling import DataSets
+
+    print("\n\nUSING DATA FOLDER={0}\n\n".format(data_folder))
     flags.DEFINE_string('data_dir',
-                               './data/',
+                               './{0}/'.format(data_folder),
                                """Directory of input data for the network """)
     # File for stdout
     logfile = open(os.path.join(FLAGS.train_dir, 'results_%s.log' % datetime.datetime.now()), 'w')
