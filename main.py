@@ -49,8 +49,8 @@ else:
                                """Directory where to write event logs """
                                """and checkpoints.""")
 
-    data_folder = "data"; from data.DataHandeling import DataSets
-    # data_folder = "data_aug"; from data_aug.DataHandeling import DataSets
+    # data_folder = "data"; from data.DataHandeling import DataSets
+    data_folder = "data_aug"; from data_aug.DataHandeling import DataSets
 
     print("\n\nUSING DATA FOLDER={0}\n\n".format(data_folder))
     flags.DEFINE_string('data_dir',
@@ -64,9 +64,6 @@ file_names = ['train', 'test', 'val']
 DIMS_IN = (64, 64, 1)
 DIMS_OUT = (64, 64, 1)
 TEST_AMOUNT = 478
-
-
-
 
 class Net(object):
     """

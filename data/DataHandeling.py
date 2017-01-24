@@ -22,7 +22,7 @@ class DataSets(object):
 class CSVSegReader(object):
 
     def __init__(self, filenames, base_folder='.', image_size=(64,64,1), num_threads=4,
-                 capacity=5000, min_after_dequeue=1000, num_epochs=None):
+                 capacity=10000, min_after_dequeue=1000, num_epochs=None):
         """
         CSVSegReader is a class that reads csv files containing paths to input image and segmentation image and outputs
         batchs of correspoding image inputs and segmentation inputs.

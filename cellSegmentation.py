@@ -36,18 +36,24 @@ class CellSegmentation(object):
         # Dump input image
         tf.image_summary(self.get_name('x_input'), x_image)
 
+        # TODO - max pooling
+        # TODO - init weights method
+
         # Model convolutions
         d_out = 1
 
         # conv_1, reg1 = ops.conv2d(x_image, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
         conv_1, reg1 = ops.conv2d(x_image, output_dim=16, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_1")
+        conv_1 = batch_norm_layer(x=conv_1, train_phase=train_phase, scope_bn="bn1")
         conv_1 = ops.lrelu(conv_1, name='relu1')
 
         # conv_2, reg2 = ops.conv2d(conv_1, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
         conv_2, reg2 = ops.conv2d(conv_1, output_dim=32, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
+        conv_2 = batch_norm_layer(x=conv_2, train_phase=train_phase, scope_bn="bn2")
         conv_2 = ops.lrelu(conv_2, name='relu2')
 
         conv_3, reg3 = ops.conv2d(conv_2, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
+        conv_3 = batch_norm_layer(x=conv_3, train_phase=train_phase, scope_bn="bn3")
         conv_3 = ops.lrelu(conv_3, name='relu3')
 
         conv_4, reg4 = ops.conv2d(conv_3, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_4")
@@ -292,3 +298,13 @@ def _activation_summary(x):
   tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', x.op.name)
   # tf.contrib.deprecated.histogram_summary(tensor_name + '/activations', x) # TODO this gave me an error but a fix could give me the histograms at the end
   # tf.contrib.deprecated.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x)) # TODO this gave me an error but a fix could give me the histograms at the end
+
+def batch_norm_layer(x, train_phase, scope_bn):
+  bn_train = batch_norm(x, decay=0.999, center=True, scale=True,
+                        updates_collections=None,
+                        is_training=True, scope=scope_bn)
+  bn_inference = batch_norm(x, decay=0.999, center=True, scale=True,
+                            updates_collections=None,
+                            is_training=False, scope=scope_bn, reuse=True)
+  bn = tf.cond(train_phase, lambda: bn_train, lambda: bn_inference)
+  return bn
