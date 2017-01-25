@@ -19,3 +19,26 @@ imshow(Iraw, map);
 subplot(212);
 Iseg(Iseg==1)=255;
 imshow(Iseg);
+
+%%
+root_dir = '/home/omri/omri_dl1/play_ground/data_aug';
+path = {'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_90.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_180.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_270.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_0_flip.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_90_flip.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_180_flip.png',
+'Train/RAW/Alon_Lab_H1299_t_72_y_8_x_3_270_flip.png'};
+
+figure;
+for z=1:numel(path)
+    [I,map] = imread(fullfile(root_dir,path{z}));
+    if z<5
+        subplot(2,4,z);
+    else
+        subplot(2,4,z);
+    end
+    imshow(I,map);
+end
+
