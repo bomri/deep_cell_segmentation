@@ -56,12 +56,16 @@ class CellSegmentation(object):
         conv_3 = batch_norm_layer(x=conv_3, train_phase=train_phase, scope_bn="bn3")
         conv_3 = ops.lrelu(conv_3, name='relu3')
 
-        conv_4, reg4 = ops.conv2d(conv_3, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_4")
+        conv_4, reg4 = ops.conv2d(conv_3, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_4")
+        conv_4 = batch_norm_layer(x=conv_4, train_phase=train_phase, scope_bn="bn4")
+        conv_4 = ops.lrelu(conv_4, name='relu4')
 
-        predict = conv_4
+        conv_5, reg5 = ops.conv2d(conv_4, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_5")
+
+        predict = conv_5
         
         # reg = reg1 # reg2 + reg3 + reg4
-        reg = reg1 + reg2 + reg3 + reg4
+        reg = reg1 + reg2 + reg3 + reg4 + reg5
         return predict, reg
 
     def new_model(self, train_phase):
