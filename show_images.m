@@ -42,3 +42,60 @@ for z=1:numel(path)
     imshow(I,map);
 end
 
+
+%% view test image results
+path = {
+'/home/omri/omri_dl1/play_ground/data_aug/Test/RAW/Alon_Lab_H1299_t_1_y_1_x_2.png',
+'/home/omri/omri_dl1/play_ground/data_aug/Test/SEG/Alon_Lab_H1299_t_1_y_1_x_2.png',
+'/tmp/outfile.jpg',
+};
+
+figure;
+for z=1:numel(path)
+    [I,map] = imread(path{z});
+    subplot(3,1,z);
+    imshow(I,map);
+end
+
+%% view with predict
+close all;
+path = {
+'/home/omri/omri_dl1/play_ground/data_aug/Test/RAW/Alon_Lab_H1299_t_1_y_3_x_3.png'
+'/home/omri/omri_dl1/play_ground/data_aug/Test/SEG/Alon_Lab_H1299_t_1_y_3_x_3.png'
+'/tmp/omri/pred3.jpg',};
+figure;
+for z=1:numel(path)
+    [I,map] = imread(path{z});
+    subplot(3,1,z);
+    imshow(I,map);
+end
+
+%%
+close all;
+filename = '/home/omri/omri_dl1/play_ground/data_aug/test.csv';
+delimiter = ',';
+formatSpec = '%s%s%[^\n\r]';
+fileID = fopen(filename,'r');
+dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter,  'ReturnOnError', false);
+fclose(fileID);
+RAWn = dataArray{:, 1};
+SEGn = dataArray{:, 2};
+clearvars filename delimiter formatSpec fileID dataArray ans;
+
+for k=31:40
+% k=9;
+RESn = sprintf('/tmp/omri/pred%d.jpg',k-1);
+path = {
+    fullfile('/home/omri/omri_dl1/play_ground/data_aug/',RAWn{k}),
+    fullfile('/home/omri/omri_dl1/play_ground/data_aug/',SEGn{k}),
+    RESn};
+
+figure;
+for z=1:numel(path)
+    [I,map] = imread(path{z});
+    subplot(3,1,z);
+    imshow(I,map);
+end
+
+end
+

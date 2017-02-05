@@ -4,7 +4,7 @@ Main script
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 import copy
@@ -13,7 +13,7 @@ import datetime
 import time
 import argparse
 from cellSegmentation import CellSegmentation
-
+import scipy.misc
 
 """
 FLAGS - an easy way to share constants variables between functions
@@ -87,7 +87,7 @@ class Net(object):
 
         # Connect nodes and create graph
         with tf.name_scope('model'):
-            self.model, self.reg = self.network.model(self.train_phase)
+            self.model, self.reg= self.network.model(self.train_phase)
 
         with tf.name_scope('loss'):
             self.loss = self.network.loss(predict=self.model, reg=self.reg)
@@ -142,8 +142,8 @@ def train_model(mode, checkpoint=None):
     with tf.name_scope('DataSets') as scope:
         data_sets = DataSets(filenames=file_names, base_folder=FLAGS.data_dir, image_size=DIMS_IN)
         data_set_train = data_sets.data['train'].get_batch(batch_size=FLAGS.mini_batch_size)
-        data_set_val = data_sets.data['val'].get_batch(batch_size=FLAGS.mini_batch_size)
-        data_set_test = data_sets.data['test'].get_batch(batch_size=1)
+        data_set_val = data_sets.data['val'].get_batch_no_shuffle(batch_size=FLAGS.mini_batch_size)
+        data_set_test = data_sets.data['test'].get_batch_no_shuffle(batch_size=1)
 
     # Init network graph
     with tf.name_scope('Net') as scope:
@@ -217,6 +217,8 @@ def evaluate_checkpoint(checkpoint=None, output_file=None):
     net_evaluation = tf.get_collection('net_eval')
     net_predict = tf.get_collection('net_predict')
 
+    # sess.run(sess.graph._collections['trainable_variables'][00])
+
     tf.train.start_queue_runners(sess)
 
     all_acc = []
@@ -229,6 +231,8 @@ def evaluate_checkpoint(checkpoint=None, output_file=None):
     while predict_counter < TEST_AMOUNT:
 
         predict, result = sess.run([net_predict, net_evaluation])
+
+        scipy.misc.imsave('/tmp/omri/pred{0}.jpg'.format(predict_counter), predict[0].reshape(64, 64))
 
         # Save into list for averaging
         # 2.0 is a singular value 2 * (0 + EPS) / (0 + 0 + EPS) = 2
@@ -248,12 +252,45 @@ def evaluate_checkpoint(checkpoint=None, output_file=None):
     print("Average performance is: %f" % np.array(all_acc).mean())
 
 
+def view_layers(checkpoint=None, output_file=None):
+
+    merged = tf.merge_all_summaries()
+
+    # Create a saver and keep all checkpoints
+    saver = tf.train.import_meta_graph('%s.meta' % checkpoint)
+    sess = tf.Session()
+    sess.run(tf.initialize_all_variables())
+    saver.restore(sess, checkpoint)
+    net_evaluation = tf.get_collection('net_eval')
+    net_predict = tf.get_collection('net_predict')
+
+    tf.train.start_queue_runners(sess)
+
+    # Go over all data once
+    predict_counter = 0
+
+    # while predict_counter < TEST_AMOUNT:
+    while predict_counter < 1:
+
+        predict, result = sess.run([net_predict, net_evaluation])
+
+
+        scipy.misc.imsave('/tmp/outfile.jpg', predict[0].reshape(64,64))
+
+
+        predict_counter += 1
+        print("Done - " + str(predict_counter))
+
+
+
 def main(args):
 
     if args.mode == 'train' or args.mode == 'resume':
         train_model(args.mode, args.checkpoint)
     elif args.mode == 'evaluate':
         evaluate_checkpoint(checkpoint=args.checkpoint, output_file=args.output_file)
+    elif args.mode == 'view':
+        view_layers(checkpoint=args.checkpoint)
 
 if __name__ == '__main__':
     """
@@ -266,7 +303,7 @@ if __name__ == '__main__':
                    the network outputs will be dumped as binary files.
     """
     parser = argparse.ArgumentParser(description='Main script for train Cell segmentation')
-    parser.add_argument('--mode', dest='mode', choices=['train', 'evaluate', 'resume'], type=str, help='mode')
+    parser.add_argument('--mode', dest='mode', choices=['train', 'evaluate', 'resume', 'view'], type=str, help='mode')
     parser.add_argument('--checkpoint', dest='checkpoint', type=str, help='checkpoint full path')
     parser.add_argument('--output_file', dest='output_file', default=None, type=str, help='Output file for predict')
     args = parser.parse_args()
@@ -274,6 +311,8 @@ if __name__ == '__main__':
     if args.mode == 'evaluate':
         assert args.checkpoint, "Must have checkpoint for evaluate"
     elif args.mode == 'resume':
+        assert args.checkpoint, "Must have checkpoint for resume"
+    elif args.mode == 'view':
         assert args.checkpoint, "Must have checkpoint for resume"
 
     main(args)

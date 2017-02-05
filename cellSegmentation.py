@@ -39,6 +39,8 @@ class CellSegmentation(object):
         # TODO - max pooling
         # TODO - init weights method
 
+        # return x_image
+
         # Model convolutions
         d_out = 1
 
@@ -47,12 +49,13 @@ class CellSegmentation(object):
         conv_1 = batch_norm_layer(x=conv_1, train_phase=train_phase, scope_bn="bn1")
         conv_1 = ops.lrelu(conv_1, name='relu1')
 
+
         # conv_2, reg2 = ops.conv2d(conv_1, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
         conv_2, reg2 = ops.conv2d(conv_1, output_dim=32, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_2")
         conv_2 = batch_norm_layer(x=conv_2, train_phase=train_phase, scope_bn="bn2")
         conv_2 = ops.lrelu(conv_2, name='relu2')
 
-        conv_3, reg3 = ops.conv2d(conv_2, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
+        conv_3, reg3 = ops.conv2d(conv_2, output_dim=32, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_3")
         conv_3 = batch_norm_layer(x=conv_3, train_phase=train_phase, scope_bn="bn3")
         conv_3 = ops.lrelu(conv_3, name='relu3')
 
@@ -60,12 +63,17 @@ class CellSegmentation(object):
         conv_4 = batch_norm_layer(x=conv_4, train_phase=train_phase, scope_bn="bn4")
         conv_4 = ops.lrelu(conv_4, name='relu4')
 
-        conv_5, reg5 = ops.conv2d(conv_4, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_5")
+        conv_5, reg5 = ops.conv2d(conv_4, output_dim=64, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_5")
+        conv_5 = batch_norm_layer(x=conv_5, train_phase=train_phase, scope_bn="bn5")
+        conv_5 = ops.lrelu(conv_5, name='relu5')
 
-        predict = conv_5
+        conv_6, reg6 = ops.conv2d(conv_5, output_dim=d_out, k_h=3, k_w=3, d_h=1, d_w=1, name="conv_6")
+
+
+        predict = conv_6
         
         # reg = reg1 # reg2 + reg3 + reg4
-        reg = reg1 + reg2 + reg3 + reg4 + reg5
+        reg = reg1 + reg2 + reg3 + reg4 + reg5 + reg6
         return predict, reg
 
     def new_model(self, train_phase):
